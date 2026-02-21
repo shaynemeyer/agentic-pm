@@ -21,10 +21,12 @@ uv run pytest tests/test_foo.py    # Run a single test file
 ## Planned architecture
 
 The backend serves two roles:
+
 1. Serves the statically-built Next.js frontend at `/`
 2. Exposes a REST API for the Kanban board and AI chat
 
 Key API surface (to be built):
+
 - `POST /api/auth/login` — validate hardcoded credentials (`user` / `password`), return session token
 - `GET /api/board` — return the current user's Kanban board as JSON
 - `PATCH /api/board` — update board state (move/edit/add/delete cards or columns)
