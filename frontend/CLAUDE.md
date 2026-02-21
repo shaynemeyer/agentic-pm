@@ -33,8 +33,6 @@ bun run test src/components/KanbanBoard.test.tsx
 
 ## Architecture
 
-This is a pure frontend-only demo (no backend yet). All state is ephemeral — no persistence.
-
 **Data model** (`src/lib/kanban.ts`):
 
 - `Card`: `{ id, title, details }`
@@ -43,17 +41,26 @@ This is a pure frontend-only demo (no backend yet). All state is ephemeral — n
 
 **Component hierarchy**:
 
-- `KanbanBoard` — single stateful component holding all `BoardData` in `useState`. Handles drag-and-drop via `@dnd-kit/core`, and passes callbacks for rename/add/delete down to children.
+- `KanbanBoard` — single stateful root; holds `BoardData` in `useState`; owns all DnD logic via `@dnd-kit/core`, passes callbacks for rename/add/delete to children
 - `KanbanColumn` — droppable via `useDroppable`; wraps cards in `SortableContext`
 - `KanbanCard` — sortable/draggable via `useSortable`
 - `KanbanCardPreview` — non-interactive clone rendered in `DragOverlay` during drag
 - `NewCardForm` — inline toggle form at the bottom of each column
 
-**Drag-and-drop**: Uses `@dnd-kit/core` with `closestCorners` collision detection. `moveCard()` in `kanban.ts` is a pure function — handles same-column reorder and cross-column moves.
+**Drag-and-drop**: `@dnd-kit/core` with `closestCorners` collision detection. `moveCard()` in `kanban.ts` is a pure function handling same-column reorder and cross-column moves.
 
-**Styling**: Tailwind 4 utility classes with CSS custom properties defined in `globals.css`. Reference colors via `var(--accent-yellow)`, `var(--primary-blue)`, etc. — never hardcode hex values. Fonts are Space Grotesk (`--font-display`) and Manrope (`--font-body`) loaded via `next/font/google`.
+**Styling**: Tailwind 4 with CSS custom properties in `globals.css`. Always use variables — never hardcode hex values:
 
-**Path alias**: `@/` resolves to `src/` in both Next.js and Vitest.
+| Variable             | Hex       | Use                               |
+| -------------------- | --------- | --------------------------------- |
+| `--accent-yellow`    | `#ecad0a` | accent lines, highlights          |
+| `--primary-blue`     | `#209dd7` | links, key sections               |
+| `--purple-secondary` | `#753991` | submit buttons, important actions |
+| `--dark-navy`        | `#032147` | main headings                     |
+| `--gray-text`        | `#888888` | supporting text, labels           |
+
+Fonts: Space Grotesk (`--font-display`), Manrope (`--font-body`) via `next/font/google`.
+Path alias: `@/` resolves to `src/` in both Next.js and Vitest.
 
 ## Testing setup
 
