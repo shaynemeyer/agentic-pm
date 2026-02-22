@@ -183,33 +183,33 @@ Goal: Full REST API for reading and mutating the Kanban board, backed by SQLite.
 
 ### Steps
 
-- [ ] Create `backend/app/database.py`:
+- [x] Create `backend/app/database.py`:
   - Async engine (`sqlite+aiosqlite:///./board.db`)
   - `async_session_maker` via `sessionmaker(..., class_=AsyncSession, expire_on_commit=False)`
   - `Base = declarative_base()`
   - `get_session()` dependency (yields `AsyncSession`)
   - `init_db()` — `Base.metadata.create_all`, then calls `seed_db()` if tables empty
   - `seed_db(session)` — inserts the 5 columns + 8 cards from `initialData`
-- [ ] Create `backend/app/models/__init__.py`
-- [ ] Create `backend/app/models/board.py`:
+- [x] Create `backend/app/models/__init__.py`
+- [x] Create `backend/app/models/board.py`:
   - ORM: `KanbanColumn` (id, title, position), `KanbanCard` (id, title, details, column_id FK, position)
   - Pydantic: `CardSchema`, `ColumnSchema`, `BoardData`
   - `async def db_to_board(session) -> BoardData`
   - `async def board_to_db(session, board: BoardData)` — diff-based upsert (delete removed IDs, INSERT OR REPLACE rest)
-- [ ] Create `backend/app/routes/board.py`:
+- [x] Create `backend/app/routes/board.py`:
   - `GET /api/board` — returns `BoardData`, requires auth
   - `PATCH /api/board` — accepts `BoardData`, calls `board_to_db`, returns updated `BoardData`, requires auth
-- [ ] Register board router in `app/main.py`
-- [ ] Update `app/main.py` lifespan to call `init_db()` on startup
-- [ ] Remove the temporary `GET /api/me` route
+- [x] Register board router in `app/main.py`
+- [x] Update `app/main.py` lifespan to call `init_db()` on startup
+- [x] Remove the temporary `GET /api/me` route
 
 ### Tests
 
-- [ ] `tests/conftest.py`:
+- [x] `tests/conftest.py`:
   - In-memory SQLite engine + `init_db()` fixture
   - `TestClient` with `get_session` overridden
   - `auth_headers` fixture (logs in, returns `{"Authorization": "Bearer <token>"}`)
-- [ ] `tests/routes/test_board.py`:
+- [x] `tests/routes/test_board.py`:
   - `GET /api/board` without auth → 401
   - `GET /api/board` after login → 200, returns seeded `BoardData` (5 columns, 8 cards)
   - `PATCH /api/board` with a mutation (move card to different column) → 200, response reflects change

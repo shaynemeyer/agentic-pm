@@ -6,3 +6,5 @@
 .local_docs
 
 node_modules
+
+.venv

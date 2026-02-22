@@ -15,24 +15,23 @@ def test_wrong_username(client):
 
 
 def test_no_auth_header(client):
-    resp = client.get("/api/me")
+    resp = client.get("/api/board")
     assert resp.status_code == 401
 
 
 def test_invalid_token(client):
-    resp = client.get("/api/me", headers={"Authorization": "Bearer invalid-token"})
+    resp = client.get("/api/board", headers={"Authorization": "Bearer invalid-token"})
     assert resp.status_code == 401
 
 
 def test_malformed_auth_header(client):
-    resp = client.get("/api/me", headers={"Authorization": "Token abc"})
+    resp = client.get("/api/board", headers={"Authorization": "Token abc"})
     assert resp.status_code == 401
 
 
-def test_valid_token_accesses_me(client, auth_headers):
-    resp = client.get("/api/me", headers=auth_headers)
+def test_valid_token_accesses_protected_route(client, auth_headers):
+    resp = client.get("/api/board", headers=auth_headers)
     assert resp.status_code == 200
-    assert resp.json() == {"username": "user"}
 
 
 def test_logout(client, auth_headers):
@@ -40,7 +39,7 @@ def test_logout(client, auth_headers):
     assert resp.status_code == 204
 
     # Token is now invalid
-    resp = client.get("/api/me", headers=auth_headers)
+    resp = client.get("/api/board", headers=auth_headers)
     assert resp.status_code == 401
 
 
