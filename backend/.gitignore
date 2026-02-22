@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+wheels/
+sdist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# uv
+.uv/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# SQLite database
+*.db
+*.db-shm
+*.db-wal
+
+# Environment
+.env
+
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+
+**/__pycache__/
