@@ -6,20 +6,30 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
-  use: {
-    baseURL: "http://127.0.0.1:3000",
-    trace: "retain-on-failure",
-  },
+  projects: [
+    {
+      name: "chromium",
+      testIgnore: ["**/docker-smoke.spec.ts"],
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://127.0.0.1:3000",
+        trace: "retain-on-failure",
+      },
+    },
+    {
+      name: "docker-smoke",
+      testMatch: ["**/docker-smoke.spec.ts"],
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:8000",
+        trace: "retain-on-failure",
+      },
+    },
+  ],
   webServer: {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3000",
+    command: "bunx next dev --hostname 127.0.0.1 --port 3000",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: true,
     timeout: 120_000,
   },
-  projects: [
-    {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
-    },
-  ],
 });

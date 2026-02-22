@@ -1,0 +1,14 @@
+**/.git
+**/.gitignore
+**/.DS_Store
+**/node_modules
+frontend/.next
+frontend/out
+frontend/test-results
+**/__pycache__
+**/*.pyc
+backend/.venv
+backend/board.db
+.env
+.env.local
+docs/

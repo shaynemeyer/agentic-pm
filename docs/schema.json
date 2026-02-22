@@ -1,0 +1,20 @@
+{
+  "tables": {
+    "kanban_columns": {
+      "columns": {
+        "id": "TEXT PK",
+        "title": "TEXT",
+        "position": "INTEGER"
+      }
+    },
+    "kanban_cards": {
+      "columns": {
+        "id": "TEXT PK",
+        "title": "TEXT",
+        "details": "TEXT DEFAULT ''",
+        "column_id": "TEXT FK→kanban_columns.id ON DELETE CASCADE",
+        "position": "INTEGER"
+      }
+    }
+  }
+}

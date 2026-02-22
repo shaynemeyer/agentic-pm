@@ -1,5 +1,16 @@
 import { expect, test } from "@playwright/test";
 
+// Seed a fake auth token so the board renders without a backend
+test.beforeEach(async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem(
+      "auth",
+      JSON.stringify({ state: { token: "test-token" }, version: 0 })
+    );
+  });
+});
+
 test("loads the kanban board", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
@@ -20,6 +31,8 @@ test("moves a card between columns", async ({ page }) => {
   await page.goto("/");
   const card = page.getByTestId("card-card-1");
   const targetColumn = page.getByTestId("column-col-review");
+  await card.waitFor({ state: "visible" });
+  await targetColumn.waitFor({ state: "visible" });
   const cardBox = await card.boundingBox();
   const columnBox = await targetColumn.boundingBox();
   if (!cardBox || !columnBox) {

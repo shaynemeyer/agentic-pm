@@ -9,11 +9,14 @@ Sign in with `user` / `password`. App served at `http://localhost:8000`.
 
 ## Commands
 
-### Docker (full stack)
+### Container (full stack)
+
+The scripts auto-detect `docker` or `podman`. Override with `CONTAINER_RUNTIME`:
 
 ```bash
-./scripts/start.sh   # Build and run the Docker container
-./scripts/stop.sh    # Stop the container
+./scripts/start.sh              # Build and run (auto-detects docker/podman)
+./scripts/stop.sh               # Stop the container
+CONTAINER_RUNTIME=podman ./scripts/start.sh  # Force podman
 ```
 
 See `frontend/CLAUDE.md` for frontend commands and `backend/CLAUDE.md` for backend commands.

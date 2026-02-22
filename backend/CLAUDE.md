@@ -5,6 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Stack
 
 - Python FastAPI
+- Pattern I like to use: https://github.com/shaynemeyer/fastapi-boilerplate
+- SQLAlchemy for the ORM
 - SQLite (via the standard `sqlite3` module or SQLAlchemy — created on first run if missing)
 - OpenRouter for AI calls (model: `openai/gpt-oss-120b`)
 - uv for package management and virtual environments
