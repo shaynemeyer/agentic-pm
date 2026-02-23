@@ -305,20 +305,20 @@ Goal: `POST /api/chat` accepts conversation history + board state, calls the AI 
 
 ### Steps
 
-- [ ] Define Pydantic schemas in `backend/app/models/board.py`:
+- [x] Define Pydantic schemas in `backend/app/models/board.py`:
   - `ChatMessage(role: Literal["user","assistant"], content: str)`
   - `ChatRequest(messages: list[ChatMessage], board: BoardData)`
   - `ChatResponse(message: str, board_update: BoardData | None = None)`
-- [ ] Update `backend/app/ai.py` — `call_ai` uses structured output (OpenAI `response_format` / JSON mode):
+- [x] Update `backend/app/ai.py` — `call_ai` uses structured output (OpenAI `response_format` / JSON mode):
   - System prompt includes: board JSON, instructions to return `{ "message": "...", "board_update": <BoardData or null> }`
   - Parse response; if `board_update` present and valid, include it in return value
-- [ ] Create `backend/app/routes/chat.py`:
+- [x] Create `backend/app/routes/chat.py`:
   - `POST /api/chat` — requires auth; calls `call_ai(body.board.model_dump(), body.messages)`; if `board_update` returned, calls `board_to_db(session, BoardData(...))` to persist; returns `ChatResponse`
-- [ ] Register chat router in `app/main.py`
+- [x] Register chat router in `app/main.py`
 
 ### Tests
 
-- [ ] `tests/routes/test_chat.py` (monkeypatch `call_ai`):
+- [x] `tests/routes/test_chat.py` (monkeypatch `call_ai`):
   - POST without auth → 401
   - POST with valid request, `call_ai` mocked to return `{"message": "Done", "board_update": null}` → 200, `message` in response
   - POST where `call_ai` returns a `board_update` → 200; subsequent `GET /api/board` reflects the board update

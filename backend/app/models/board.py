@@ -1,3 +1,4 @@
+from typing import Literal
 from sqlalchemy import Column as SAColumn, String, Integer, ForeignKey, delete, select
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -41,6 +42,21 @@ class ColumnSchema(BaseModel):
 class BoardData(BaseModel):
     columns: list[ColumnSchema]
     cards: dict[str, CardSchema]
+
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessage]
+    board: BoardData
+
+
+class ChatResponse(BaseModel):
+    message: str
+    board_update: BoardData | None = None
 
 
 async def db_to_board(session: AsyncSession) -> BoardData:

@@ -1,6 +1,7 @@
 import json
 import openai
 from app import config
+from app.models.board import ChatMessage
 
 _client = openai.OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -8,7 +9,7 @@ _client = openai.OpenAI(
 )
 
 
-def call_ai(board: dict, messages: list[dict]) -> dict:
+def call_ai(board: dict, messages: list[ChatMessage]) -> dict:
     system_prompt = (
         "You are an AI assistant helping manage a Kanban board. "
         "The current board state is provided as JSON below.\n\n"
@@ -19,7 +20,9 @@ def call_ai(board: dict, messages: list[dict]) -> dict:
         "Return only valid JSON."
     )
 
-    openai_messages = [{"role": "system", "content": system_prompt}] + messages
+    openai_messages = [{"role": "system", "content": system_prompt}] + [
+        {"role": m.role, "content": m.content} for m in messages
+    ]
 
     response = _client.chat.completions.create(
         model="openai/gpt-oss-120b",
