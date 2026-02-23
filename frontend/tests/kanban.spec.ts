@@ -59,6 +59,7 @@ test.beforeEach(async ({ page }) => {
   await page.getByLabel("Password").fill("password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.waitForURL("**/");
+  await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
 });
 
 test("loads the kanban board", async ({ page }) => {
@@ -79,10 +80,11 @@ test("adds a card to a column", async ({ page }) => {
 
 test("moves a card between columns", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
   const card = page.getByTestId("card-card-1");
   const targetColumn = page.getByTestId("column-col-review");
-  await card.waitFor({ state: "visible" });
-  await targetColumn.waitFor({ state: "visible" });
+  await card.scrollIntoViewIfNeeded();
+  await targetColumn.scrollIntoViewIfNeeded();
   const cardBox = await card.boundingBox();
   const columnBox = await targetColumn.boundingBox();
   if (!cardBox || !columnBox) {

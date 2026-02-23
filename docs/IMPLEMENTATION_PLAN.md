@@ -382,6 +382,32 @@ Goal: A collapsible sidebar in the UI with full chat UI. AI responses can update
 
 ---
 
+## Post-Part-10 Bug Fixes
+
+### Fix 1: Flaky drag-and-drop e2e test
+
+**Symptom:** `tests/kanban.spec.ts → moves a card between columns` failed intermittently with "Unable to resolve drag coordinates." when the full suite ran with 4 parallel workers. The test passed when run in isolation.
+
+**Root cause:** `kanban.spec.ts` `beforeEach` logged in and landed on `/` but did not verify the board was fully rendered. Each test then did a redundant `page.goto("/")`, causing a full page reload. After the reload, `card.waitFor({ state: "visible" })` resolved the moment the card appeared in the DOM, but `card.boundingBox()` called immediately after could still return `null` during a transient React re-render triggered by concurrent dev-server activity.
+
+**Fix (`tests/kanban.spec.ts`):**
+- Added `await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible()` to `beforeEach` after `waitForURL`. This matches the pattern in `integration.spec.ts`'s `login()` helper and guarantees the board is stable before each test starts.
+- In the drag test, replaced `waitFor({ state: "visible" })` calls with `scrollIntoViewIfNeeded()` before each `boundingBox()` call. `scrollIntoViewIfNeeded()` ensures the element is in the viewport and settled before the coordinate snapshot is taken.
+
+---
+
+### Fix 2: Docker build OOM (SIGKILL on Next.js build worker)
+
+**Symptom:** `docker build` failed with `Next.js build worker exited with code: null and signal: SIGKILL` during `RUN bun run build`.
+
+**Root cause:** Next.js defaulted its static-page-generation worker count to the host CPU count (13 on the build machine), spawning 13 Node.js workers to generate 5 pages. In a memory-constrained Docker build environment the aggregate RSS of those workers exhausted available RAM and the Linux OOM killer sent SIGKILL.
+
+**Fix 1 (`frontend/next.config.ts`):** Added `experimental: { memoryBasedWorkersCount: true }`. This tells Next.js to derive the worker count from available RAM rather than CPU count. Workers dropped from 13 to 4 on the dev machine and will be lower still inside Docker where less RAM is available.
+
+**Fix 2 (`Dockerfile`):** Changed `RUN bun run build` to `RUN NODE_OPTIONS=--max-old-space-size=2048 bun run build`. This caps each Node.js worker's V8 heap at 2 GB, causing the GC to collect more aggressively before a worker can grow large enough to trigger the OOM killer.
+
+---
+
 ## Cross-Cutting Notes
 
 - **Package managers**: `bun` for frontend, `uv` for backend — never mix

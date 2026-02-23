@@ -5,7 +5,7 @@ WORKDIR /app/frontend
 COPY frontend/package.json frontend/bun.lock ./
 RUN bun install --frozen-lockfile
 COPY frontend/ ./
-RUN bun run build
+RUN NODE_OPTIONS=--max-old-space-size=2048 bun run build
 
 # Stage 2: Python backend
 FROM python:3.12-slim
