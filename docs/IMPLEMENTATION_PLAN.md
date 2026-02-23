@@ -276,18 +276,18 @@ Goal: Backend can make an OpenRouter call. Verified with a simple arithmetic tes
 
 ### Steps
 
-- [ ] Create `backend/app/ai.py`:
+- [x] Create `backend/app/ai.py`:
   - Instantiate `openai.OpenAI(base_url="https://openrouter.ai/api/v1", api_key=config.OPENROUTER_API_KEY)`
   - `def call_ai(board: dict, messages: list[dict]) -> dict` — placeholder that sends system + user messages to `openai/gpt-oss-120b`, parses and returns the response dict
-- [ ] Add `OPENROUTER_API_KEY=<key>` to `.env` (not committed — `.env` is in `.gitignore`)
-- [ ] Create a standalone connectivity test script `backend/scripts/test_ai.py`:
+- [x] Add `OPENROUTER_API_KEY=<key>` to `.env` (not committed — `.env` is in `.gitignore`)
+- [x] Create a standalone connectivity test script `backend/scripts/test_ai.py`:
   - Sends `"What is 2+2?"` to OpenRouter
   - Prints the response
   - Exit code 0 if response received, 1 if error
 
 ### Tests
 
-- [ ] `tests/test_ai_connectivity.py` (integration, skipped if no API key):
+- [x] `tests/test_ai_connectivity.py` (integration, skipped if no API key):
   - Sends a `"2+2"` message
   - Asserts response contains `"4"`
   - Marked `@pytest.mark.skipif(not config.OPENROUTER_API_KEY, reason="no API key")`
