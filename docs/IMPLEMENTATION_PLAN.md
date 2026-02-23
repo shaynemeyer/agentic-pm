@@ -233,26 +233,26 @@ Goal: The frontend reads from and writes to the backend API. Board state is pers
 
 ### Steps
 
-- [ ] Install `@tanstack/react-query` via bun (server/async state)
-- [ ] Create `src/lib/api.ts`:
+- [x] Install `@tanstack/react-query` via bun (server/async state)
+- [x] Create `src/lib/api.ts`:
   - `fetchBoard(): Promise<BoardData>` — `GET /api/board` with auth token
   - `updateBoard(board: BoardData): Promise<BoardData>` — `PATCH /api/board` with auth token
   - Reads token from auth Zustand store; throws if 401 (triggers logout)
-- [ ] Create `src/lib/queryClient.ts` — exports a singleton `QueryClient`
-- [ ] Wrap app in `QueryClientProvider` in `src/app/layout.tsx`
-- [ ] Refactor `KanbanBoard.tsx`:
+- [x] Create `src/lib/queryClient.ts` — exports a singleton `QueryClient`
+- [x] Wrap app in `QueryClientProvider` in `src/app/layout.tsx` (via `Providers.tsx` client wrapper)
+- [x] Refactor `KanbanBoard.tsx`:
   - Replace `useState(initialData)` with `useQuery({ queryKey: ["board"], queryFn: fetchBoard })`
   - On DnD drop / rename / add / delete: call `updateBoard(newBoard)` then `queryClient.invalidateQueries(["board"])`
   - Show a loading skeleton while fetching; show an error state if fetch fails
-- [ ] Confirm `next.config.ts` still produces a static export (all API calls are client-side `fetch`)
+- [x] Confirm `next.config.ts` still produces a static export (all API calls are client-side `fetch`)
 
 ### Tests
 
 **Frontend unit/component tests** (mock `fetch` via `vi.fn()`):
 
-- [ ] `KanbanBoard.test.tsx` — mock `fetchBoard` returns seeded data; assert columns render
-- [ ] `KanbanBoard.test.tsx` — simulate drag-drop; assert `updateBoard` called with correct new board
-- [ ] `api.test.ts` — `fetchBoard` calls correct URL with Authorization header; handles 401 by clearing token
+- [x] `KanbanBoard.test.tsx` — mock `fetchBoard` returns seeded data; assert columns render
+- [x] `KanbanBoard.test.tsx` — simulate drag-drop; assert `updateBoard` called with correct new board
+- [x] `api.test.ts` — `fetchBoard` calls correct URL with Authorization header; handles 401 by clearing token
 
 **Playwright e2e — `tests/integration.spec.ts`**:
 

@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/lib/auth";
+import { fetchBoard, updateBoard } from "@/lib/api";
 import {
   DndContext,
   DragOverlay,
@@ -15,15 +17,27 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
-import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import { createId, moveCard, type BoardData } from "@/lib/kanban";
+
+async function persist(queryClient: ReturnType<typeof useQueryClient>, newBoard: BoardData) {
+  queryClient.setQueryData(["board"], newBoard);
+  await updateBoard(newBoard);
+  queryClient.invalidateQueries({ queryKey: ["board"] });
+}
 
 export const KanbanBoard = () => {
-  const [board, setBoard] = useState<BoardData>(() => initialData);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   const token = useAuthStore((s) => s.token);
   const clearToken = useAuthStore((s) => s.clearToken);
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const { data: board, isLoading, isError } = useQuery({
+    queryKey: ["board"],
+    queryFn: fetchBoard,
+    enabled: !!token,
+  });
 
   const handleSignOut = async () => {
     try {
@@ -43,71 +57,91 @@ export const KanbanBoard = () => {
     })
   );
 
-  const cardsById = useMemo(() => board.cards, [board.cards]);
+  const cardsById = useMemo(() => board?.cards ?? {}, [board?.cards]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveCardId(event.active.id as string);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveCardId(null);
 
-    if (!over || active.id === over.id) {
-      return;
-    }
+    if (!board || !over || active.id === over.id) return;
 
-    setBoard((prev) => ({
-      ...prev,
-      columns: moveCard(prev.columns, active.id as string, over.id as string),
-    }));
+    const newBoard: BoardData = {
+      ...board,
+      columns: moveCard(board.columns, active.id as string, over.id as string),
+    };
+    await persist(queryClient, newBoard);
   };
 
-  const handleRenameColumn = (columnId: string, title: string) => {
-    setBoard((prev) => ({
-      ...prev,
-      columns: prev.columns.map((column) =>
+  const handleRenameColumn = async (columnId: string, title: string) => {
+    if (!board) return;
+    const newBoard: BoardData = {
+      ...board,
+      columns: board.columns.map((column) =>
         column.id === columnId ? { ...column, title } : column
       ),
-    }));
+    };
+    await persist(queryClient, newBoard);
   };
 
-  const handleAddCard = (columnId: string, title: string, details: string) => {
+  const handleAddCard = async (columnId: string, title: string, details: string) => {
+    if (!board) return;
     const id = createId("card");
-    setBoard((prev) => ({
-      ...prev,
+    const newBoard: BoardData = {
+      ...board,
       cards: {
-        ...prev.cards,
+        ...board.cards,
         [id]: { id, title, details: details || "No details yet." },
       },
-      columns: prev.columns.map((column) =>
+      columns: board.columns.map((column) =>
         column.id === columnId
           ? { ...column, cardIds: [...column.cardIds, id] }
           : column
       ),
-    }));
+    };
+    await persist(queryClient, newBoard);
   };
 
-  const handleDeleteCard = (columnId: string, cardId: string) => {
-    setBoard((prev) => {
-      return {
-        ...prev,
-        cards: Object.fromEntries(
-          Object.entries(prev.cards).filter(([id]) => id !== cardId)
-        ),
-        columns: prev.columns.map((column) =>
-          column.id === columnId
-            ? {
-                ...column,
-                cardIds: column.cardIds.filter((id) => id !== cardId),
-              }
-            : column
-        ),
-      };
-    });
+  const handleDeleteCard = async (columnId: string, cardId: string) => {
+    if (!board) return;
+    const newBoard: BoardData = {
+      ...board,
+      cards: Object.fromEntries(
+        Object.entries(board.cards).filter(([id]) => id !== cardId)
+      ),
+      columns: board.columns.map((column) =>
+        column.id === columnId
+          ? { ...column, cardIds: column.cardIds.filter((id) => id !== cardId) }
+          : column
+      ),
+    };
+    await persist(queryClient, newBoard);
   };
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)]">
+          Loading board...
+        </p>
+      </div>
+    );
+  }
+
+  if (isError || !board) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-500">
+          Failed to load board.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden">

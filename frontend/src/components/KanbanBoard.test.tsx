@@ -1,35 +1,71 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { vi } from "vitest";
+import { vi, beforeEach } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { initialData } from "@/lib/kanban";
+import * as api from "@/lib/api";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
 }));
 
-const getFirstColumn = () => screen.getAllByTestId(/column-/i)[0];
+vi.mock("@/lib/api", () => ({
+  fetchBoard: vi.fn(),
+  updateBoard: vi.fn(),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  useAuthStore: (selector: (s: { token: string | null; clearToken: () => void }) => unknown) =>
+    selector({ token: "test-token", clearToken: vi.fn() }),
+}));
+
+function wrapper({ children }: { children: React.ReactNode }) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(api.fetchBoard).mockResolvedValue(structuredClone(initialData));
+  vi.mocked(api.updateBoard).mockImplementation((board) => Promise.resolve(board));
+});
+
+const getFirstColumn = async () => {
+  const cols = await screen.findAllByTestId(/column-/i);
+  return cols[0];
+};
 
 describe("KanbanBoard", () => {
-  it("renders five columns", () => {
-    render(<KanbanBoard />);
-    expect(screen.getAllByTestId(/column-/i)).toHaveLength(5);
+  it("renders five columns from API", async () => {
+    render(<KanbanBoard />, { wrapper });
+    expect(await screen.findAllByTestId(/column-/i)).toHaveLength(5);
   });
 
-  it("renames a column", async () => {
-    render(<KanbanBoard />);
-    const column = getFirstColumn();
+  it("renames a column on blur", async () => {
+    render(<KanbanBoard />, { wrapper });
+    const column = await getFirstColumn();
     const input = within(column).getByLabelText("Column title");
     await userEvent.clear(input);
     await userEvent.type(input, "New Name");
-    expect(input).toHaveValue("New Name");
+    await userEvent.tab();
+    await waitFor(() =>
+      expect(api.updateBoard).toHaveBeenCalledWith(
+        expect.objectContaining({
+          columns: expect.arrayContaining([
+            expect.objectContaining({ title: "New Name" }),
+          ]),
+        })
+      )
+    );
   });
 
-  it("adds and removes a card", async () => {
-    render(<KanbanBoard />);
-    const column = getFirstColumn();
-    const addButton = within(column).getByRole("button", {
-      name: /add a card/i,
-    });
+  it("adds a card and calls updateBoard", async () => {
+    render(<KanbanBoard />, { wrapper });
+    const column = await getFirstColumn();
+    const addButton = within(column).getByRole("button", { name: /add a card/i });
     await userEvent.click(addButton);
 
     const titleInput = within(column).getByPlaceholderText(/card title/i);
@@ -39,13 +75,27 @@ describe("KanbanBoard", () => {
 
     await userEvent.click(within(column).getByRole("button", { name: /add card/i }));
 
-    expect(within(column).getByText("New card")).toBeInTheDocument();
+    await waitFor(() => expect(api.updateBoard).toHaveBeenCalled());
+    const call = vi.mocked(api.updateBoard).mock.calls[0][0];
+    const newCard = Object.values(call.cards).find((c) => (c as { title: string }).title === "New card");
+    expect(newCard).toBeDefined();
+  });
 
-    const deleteButton = within(column).getByRole("button", {
-      name: /delete new card/i,
+  it("deletes a card and calls updateBoard", async () => {
+    render(<KanbanBoard />, { wrapper });
+    const column = await getFirstColumn();
+
+    const deleteButton = await within(column).findByRole("button", {
+      name: /delete align roadmap themes/i,
     });
     await userEvent.click(deleteButton);
 
-    expect(within(column).queryByText("New card")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(api.updateBoard).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cards: expect.not.objectContaining({ "card-1": expect.anything() }),
+        })
+      )
+    );
   });
 });
