@@ -89,11 +89,11 @@ test("add a card → reload → card persists", async ({ page }) => {
   const backlog = page.getByTestId("column-col-backlog");
   await backlog.getByRole("button", { name: /add a card/i }).click();
   await backlog.getByPlaceholder(/card title/i).fill("Integration test card");
-  await backlog.getByRole("button", { name: /add card/i }).click();
-
-  await page.waitForResponse(
+  const patchDone = page.waitForResponse(
     (r) => r.url().includes("/api/board") && r.request().method() === "PATCH"
   );
+  await backlog.getByRole("button", { name: /add card/i }).click();
+  await patchDone;
 
   await page.reload();
   await expect(page.getByTestId("column-col-backlog")).toBeVisible();

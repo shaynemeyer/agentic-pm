@@ -338,39 +338,39 @@ Goal: A collapsible sidebar in the UI with full chat UI. AI responses can update
 
 ### Steps
 
-- [ ] Install `shadcn/ui` into the frontend project (run shadcn init, add `Sheet`, `Button`, `Input`, `ScrollArea` components)
-- [ ] Create `src/lib/chat.ts` — Zustand store:
+- [x] Install `shadcn/ui` into the frontend project (run shadcn init, add `Sheet`, `Button`, `Input`, `ScrollArea` components)
+- [x] Create `src/lib/chat.ts` — Zustand store:
   - `messages: ChatMessage[]`
   - `addMessage(msg: ChatMessage)`
   - `clearMessages()`
-- [ ] Create `src/lib/api.ts` addition — `sendChat(messages, board): Promise<ChatResponse>`
-- [ ] Create `src/components/chat/ChatSidebar.tsx`:
+- [x] Create `src/lib/api.ts` addition — `sendChat(messages, board): Promise<ChatResponse>`
+- [x] Create `src/components/chat/ChatSidebar.tsx`:
   - Collapsible panel (open/close toggle button visible on board)
   - `ScrollArea` showing message history (user messages right-aligned, assistant left-aligned)
   - Input field + send button at the bottom
   - On send: append user message to store; call `sendChat`; append assistant message; if `board_update` in response, call `updateBoard(board_update)` and `queryClient.invalidateQueries(["board"])` to refresh the Kanban
   - Loading indicator while waiting for AI response
   - Error state if request fails
-- [ ] Create `src/components/chat/ChatMessage.tsx` — renders a single message bubble
-- [ ] Update `src/app/page.tsx` (or layout) to render `<ChatSidebar />` alongside `<KanbanBoard />`
-- [ ] Style using Tailwind CSS variables (no hardcoded colors)
+- [x] Create `src/components/chat/ChatMessage.tsx` — renders a single message bubble
+- [x] Update `src/app/page.tsx` (or layout) to render `<ChatSidebar />` alongside `<KanbanBoard />`
+- [x] Style using Tailwind CSS variables (no hardcoded colors)
 
 ### Tests
 
 **Unit/component**
 
-- [ ] `ChatSidebar.test.tsx`:
+- [x] `ChatSidebar.test.tsx`:
   - Renders toggle button
   - Opening sidebar shows empty message list
   - Typing and submitting calls `sendChat` with correct payload
   - AI response message appears in message list
   - If `board_update` returned, `updateBoard` is called
-- [ ] `ChatMessage.test.tsx` — renders user vs assistant messages with correct alignment
+- [x] `ChatMessage.test.tsx` — renders user vs assistant messages with correct alignment
 
 **Playwright e2e — `tests/ai-chat.spec.ts`**:
 
-- [ ] Login → open sidebar → type "What is on the board?" → AI responds (mock server or real key)
-- [ ] AI response that includes a `board_update` → board columns/cards visually update without page reload
+- [x] Login → open sidebar → type "What is on the board?" → AI responds (mock server or real key)
+- [x] AI response that includes a `board_update` → board columns/cards visually update without page reload
 
 ### Success Criteria
 

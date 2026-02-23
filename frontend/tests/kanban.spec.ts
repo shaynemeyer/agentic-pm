@@ -1,14 +1,64 @@
 import { expect, test } from "@playwright/test";
 
-// Seed a fake auth token so the board renders without a backend
+const BOARD = {
+  columns: [
+    { id: "col-backlog", title: "Backlog", cardIds: ["card-1", "card-2"] },
+    { id: "col-discovery", title: "Discovery", cardIds: ["card-3"] },
+    { id: "col-progress", title: "In Progress", cardIds: ["card-4", "card-5"] },
+    { id: "col-review", title: "Review", cardIds: ["card-6"] },
+    { id: "col-done", title: "Done", cardIds: ["card-7", "card-8"] },
+  ],
+  cards: {
+    "card-1": { id: "card-1", title: "Align roadmap themes", details: "" },
+    "card-2": { id: "card-2", title: "Gather customer signals", details: "" },
+    "card-3": { id: "card-3", title: "Prototype analytics view", details: "" },
+    "card-4": { id: "card-4", title: "Refine status language", details: "" },
+    "card-5": { id: "card-5", title: "Design card layout", details: "" },
+    "card-6": { id: "card-6", title: "QA micro-interactions", details: "" },
+    "card-7": { id: "card-7", title: "Ship marketing page", details: "" },
+    "card-8": { id: "card-8", title: "Close onboarding sprint", details: "" },
+  },
+};
+
+// Mock all API routes so tests run against the dev server (no Docker required).
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
-  await page.evaluate(() => {
-    localStorage.setItem(
-      "auth",
-      JSON.stringify({ state: { token: "test-token" }, version: 0 })
-    );
+  let board = JSON.parse(JSON.stringify(BOARD));
+
+  await page.route("/api/auth/login", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ token: "test-token" }),
+    });
   });
+
+  await page.route("/api/auth/logout", async (route) => {
+    await route.fulfill({ status: 204 });
+  });
+
+  await page.route("/api/board", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(board),
+      });
+    } else if (route.request().method() === "PATCH") {
+      board = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(board),
+      });
+    }
+  });
+
+  // Login before each test
+  await page.goto("/login");
+  await page.getByLabel("Username").fill("user");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.waitForURL("**/");
 });
 
 test("loads the kanban board", async ({ page }) => {

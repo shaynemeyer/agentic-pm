@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { ChatSidebar } from "@/components/chat/ChatSidebar";
 
 export default function Home() {
   const token = useAuthStore((s) => s.token);
@@ -15,5 +16,10 @@ export default function Home() {
 
   if (!token) return null;
 
-  return <KanbanBoard />;
+  return (
+    <>
+      <KanbanBoard />
+      <ChatSidebar />
+    </>
+  );
 }

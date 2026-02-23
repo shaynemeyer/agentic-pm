@@ -22,6 +22,23 @@ test.beforeEach(async ({ page }) => {
   await page.route("/api/auth/logout", async (route) => {
     await route.fulfill({ status: 204 });
   });
+
+  await page.route("/api/board", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        columns: [
+          { id: "col-backlog", title: "Backlog", cardIds: [] },
+          { id: "col-discovery", title: "Discovery", cardIds: [] },
+          { id: "col-progress", title: "In Progress", cardIds: [] },
+          { id: "col-review", title: "Review", cardIds: [] },
+          { id: "col-done", title: "Done", cardIds: [] },
+        ],
+        cards: {},
+      }),
+    });
+  });
 });
 
 test("unauthenticated / redirects to /login", async ({ page }) => {
