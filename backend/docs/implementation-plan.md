@@ -105,6 +105,23 @@ Co-locates ORM models, Pydantic schemas, and CRUD helpers (mirrors boilerplate `
 
 **SQLAlchemy ORM Models:**
 
+```mermaid
+erDiagram
+    kanban_columns {
+        TEXT id PK
+        TEXT title
+        INTEGER position
+    }
+    kanban_cards {
+        TEXT id PK
+        TEXT title
+        TEXT details
+        TEXT column_id FK
+        INTEGER position
+    }
+    kanban_columns ||--o{ kanban_cards : "has (CASCADE DELETE)"
+```
+
 `KanbanColumn` — table `kanban_columns`
 
 - `id`: String PK
@@ -273,9 +290,57 @@ Frontend `BoardData`:
 }
 ```
 
-`db_to_board`: `SELECT * FROM kanban_columns ORDER BY position` → for each, `SELECT * FROM kanban_cards WHERE column_id=? ORDER BY position` → assemble dict.
+**`db_to_board` — DB rows → JSON**
 
-`board_to_db`: compute `incoming_col_ids`, `incoming_card_ids`; `DELETE WHERE id NOT IN (...)` for each table; then `MERGE / INSERT OR REPLACE` for remaining rows.
+```mermaid
+flowchart TD
+    A[SELECT kanban_columns ORDER BY position] --> B[For each column: SELECT kanban_cards WHERE column_id = ? ORDER BY position]
+    B --> C[Build cardIds list from ordered card rows]
+    C --> D[Build cards dict keyed by card.id]
+    D --> E[Return BoardData]
+```
+
+**`board_to_db` — JSON → DB rows (diff-based upsert)**
+
+```mermaid
+flowchart TD
+    A[Receive BoardData] --> B[Fetch existing column IDs and card IDs from DB]
+    B --> C{Removed columns?}
+    C -- Yes --> D[DELETE FROM kanban_columns WHERE id IN removed_ids\ncascades to kanban_cards]
+    C -- No --> E{Removed cards?}
+    D --> E
+    E -- Yes --> F[DELETE FROM kanban_cards WHERE id IN removed_ids]
+    E -- No --> G[Upsert columns with position = array index]
+    F --> G
+    G --> H[Upsert cards with column_id + position = cardIds index]
+    H --> I[session.commit]
+```
+
+**Auth + Board API request flow**
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as FastAPI
+    participant DB as SQLite
+
+    C->>A: POST /api/auth/login {username, password}
+    A-->>C: 200 {token}
+
+    C->>A: GET /api/board (Bearer token)
+    A->>A: require_auth — validates token
+    A->>DB: SELECT columns + cards ORDER BY position
+    DB-->>A: rows
+    A-->>C: 200 BoardData JSON
+
+    C->>A: PATCH /api/board (Bearer token, updated BoardData)
+    A->>A: require_auth — validates token
+    A->>DB: diff-based DELETE + UPSERT
+    DB-->>A: ok
+    A->>DB: SELECT columns + cards ORDER BY position
+    DB-->>A: rows
+    A-->>C: 200 updated BoardData JSON
+```
 
 ---
 

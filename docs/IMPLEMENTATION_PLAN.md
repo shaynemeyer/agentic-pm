@@ -256,10 +256,10 @@ Goal: The frontend reads from and writes to the backend API. Board state is pers
 
 **Playwright e2e — `tests/integration.spec.ts`**:
 
-- [ ] Login → board loads from API (verify network call to `/api/board` returns 200)
-- [ ] Move a card to another column → board re-fetches; reload page → card still in new column
-- [ ] Add a card → reload → card persists
-- [ ] Rename a column → reload → name persists
+- [x] Login → board loads from API (verify network call to `/api/board` returns 200)
+- [x] Move a card to another column → board re-fetches; reload page → card still in new column
+- [x] Add a card → reload → card persists
+- [x] Rename a column → reload → name persists
 
 ### Success Criteria
 
