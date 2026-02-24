@@ -20,9 +20,15 @@ import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import { createId, moveCard, type BoardData } from "@/lib/kanban";
 
 async function persist(queryClient: ReturnType<typeof useQueryClient>, newBoard: BoardData) {
+  const previous = queryClient.getQueryData<BoardData>(["board"]);
   queryClient.setQueryData(["board"], newBoard);
-  await updateBoard(newBoard);
-  queryClient.invalidateQueries({ queryKey: ["board"] });
+  try {
+    await updateBoard(newBoard);
+    queryClient.invalidateQueries({ queryKey: ["board"] });
+  } catch (err) {
+    queryClient.setQueryData(["board"], previous);
+    throw err;
+  }
 }
 
 export const KanbanBoard = () => {
@@ -73,7 +79,11 @@ export const KanbanBoard = () => {
       ...board,
       columns: moveCard(board.columns, active.id as string, over.id as string),
     };
-    await persist(queryClient, newBoard);
+    try {
+      await persist(queryClient, newBoard);
+    } catch {
+      // persist already rolled back the query cache
+    }
   };
 
   const handleRenameColumn = async (columnId: string, title: string) => {
@@ -84,7 +94,11 @@ export const KanbanBoard = () => {
         column.id === columnId ? { ...column, title } : column
       ),
     };
-    await persist(queryClient, newBoard);
+    try {
+      await persist(queryClient, newBoard);
+    } catch {
+      // persist already rolled back the query cache
+    }
   };
 
   const handleAddCard = async (columnId: string, title: string, details: string) => {
@@ -102,7 +116,11 @@ export const KanbanBoard = () => {
           : column
       ),
     };
-    await persist(queryClient, newBoard);
+    try {
+      await persist(queryClient, newBoard);
+    } catch {
+      // persist already rolled back the query cache
+    }
   };
 
   const handleDeleteCard = async (columnId: string, cardId: string) => {
@@ -118,7 +136,11 @@ export const KanbanBoard = () => {
           : column
       ),
     };
-    await persist(queryClient, newBoard);
+    try {
+      await persist(queryClient, newBoard);
+    } catch {
+      // persist already rolled back the query cache
+    }
   };
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
@@ -197,7 +219,10 @@ export const KanbanBoard = () => {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <section className="grid gap-6 lg:grid-cols-5">
+          <section
+            className="grid gap-6"
+            style={{ gridTemplateColumns: `repeat(${board.columns.length}, minmax(0, 1fr))` }}
+          >
             {board.columns.map((column) => (
               <KanbanColumn
                 key={column.id}

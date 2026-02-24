@@ -26,6 +26,9 @@ async def init_db():
 
 
 async def seed_db(session: AsyncSession):
+    import logging
+    _logger = logging.getLogger(__name__)
+
     from app.models.board import KanbanColumn, KanbanCard
 
     columns = [
@@ -51,4 +54,9 @@ async def seed_db(session: AsyncSession):
     for card in cards:
         session.add(card)
 
-    await session.commit()
+    try:
+        await session.commit()
+    except Exception as exc:
+        _logger.error("Failed to seed database: %s", exc)
+        await session.rollback()
+        raise

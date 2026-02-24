@@ -40,13 +40,13 @@ export function ChatSidebar() {
     if (!text || isLoading || !board) return;
 
     const userMsg = { role: "user" as const, content: text };
-    addMessage(userMsg);
     setInput("");
     setError(null);
     setIsLoading(true);
 
     try {
       const response = await sendChat([...messages, userMsg], board);
+      addMessage(userMsg);
       addMessage({ role: "assistant", content: response.message });
 
       if (response.board_update) {

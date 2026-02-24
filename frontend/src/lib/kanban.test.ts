@@ -1,4 +1,16 @@
-import { moveCard, type Column } from "@/lib/kanban";
+import { moveCard, createId, type Column } from "@/lib/kanban";
+
+describe("createId", () => {
+  it("includes the given prefix", () => {
+    expect(createId("card")).toMatch(/^card-/);
+    expect(createId("col")).toMatch(/^col-/);
+  });
+
+  it("produces unique ids across rapid calls", () => {
+    const ids = Array.from({ length: 100 }, () => createId("card"));
+    expect(new Set(ids).size).toBe(100);
+  });
+});
 
 describe("moveCard", () => {
   const baseColumns: Column[] = [

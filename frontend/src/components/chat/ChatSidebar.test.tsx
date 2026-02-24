@@ -104,4 +104,37 @@ describe("ChatSidebar", () => {
 
     await waitFor(() => expect(api.updateBoard).toHaveBeenCalledWith(updatedBoard));
   });
+
+  it("does not add user message to store when sendChat fails", async () => {
+    vi.mocked(api.sendChat).mockRejectedValueOnce(new Error("Network error"));
+
+    render(<ChatSidebar />, { wrapper });
+    await userEvent.click(screen.getByRole("button", { name: /open ai chat/i }));
+
+    const input = await screen.findByTestId("chat-input");
+    await userEvent.type(input, "This should not appear");
+    await userEvent.click(screen.getByTestId("chat-send"));
+
+    await waitFor(() => expect(screen.getByTestId("chat-error")).toBeInTheDocument());
+
+    // The user message must not be committed to the store on failure
+    expect(screen.queryByText("This should not appear")).not.toBeInTheDocument();
+    // Empty-list placeholder should still be visible
+    expect(screen.getByTestId("empty-message-list")).toBeInTheDocument();
+  });
+
+  it("shows error message when sendChat fails", async () => {
+    vi.mocked(api.sendChat).mockRejectedValueOnce(new Error("Network error"));
+
+    render(<ChatSidebar />, { wrapper });
+    await userEvent.click(screen.getByRole("button", { name: /open ai chat/i }));
+
+    const input = await screen.findByTestId("chat-input");
+    await userEvent.type(input, "Hello");
+    await userEvent.click(screen.getByTestId("chat-send"));
+
+    expect(await screen.findByTestId("chat-error")).toHaveTextContent(
+      /failed to get a response/i
+    );
+  });
 });

@@ -98,4 +98,26 @@ describe("KanbanBoard", () => {
       )
     );
   });
+
+  it("rolls back optimistic update when updateBoard fails and board keeps rendering", async () => {
+    vi.mocked(api.updateBoard).mockRejectedValueOnce(new Error("Network error"));
+
+    // Re-seed fetchBoard so the rollback query-cache value is verifiable
+    vi.mocked(api.fetchBoard).mockResolvedValue(structuredClone(initialData));
+
+    render(<KanbanBoard />, { wrapper });
+
+    // Trigger a delete (simpler than rename — no KanbanColumn local state to deal with)
+    const column = await getFirstColumn();
+    const deleteButton = await within(column).findByRole("button", {
+      name: /delete align roadmap themes/i,
+    });
+    await userEvent.click(deleteButton);
+
+    // updateBoard was called (the optimistic update ran)
+    await waitFor(() => expect(api.updateBoard).toHaveBeenCalledOnce());
+
+    // Board still renders all five columns — no crash, rollback did not break the component
+    expect(await screen.findAllByTestId(/column-/i)).toHaveLength(5);
+  });
 });

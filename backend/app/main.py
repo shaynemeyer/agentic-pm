@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -9,10 +10,18 @@ from app.routes.auth import router as auth_router
 from app.routes.board import router as board_router
 from app.routes.chat import router as chat_router
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("Starting up — initialising database")
     await init_db()
+    logger.info("Database ready")
     yield
 
 

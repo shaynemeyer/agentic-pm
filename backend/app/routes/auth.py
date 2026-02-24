@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from app.auth.permissions import issue_token, require_auth, _valid_tokens
+from app.auth.permissions import issue_token, require_auth, revoke_token
 
 router = APIRouter()
 
@@ -25,5 +25,5 @@ async def login(body: LoginRequest):
 
 @router.post("/auth/logout", status_code=204)
 async def logout(token: str = Depends(require_auth)):
-    _valid_tokens.discard(token)
+    revoke_token(token)
     return Response(status_code=204)

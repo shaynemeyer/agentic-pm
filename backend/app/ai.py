@@ -1,7 +1,10 @@
 import json
+import logging
 import openai
 from app import config
 from app.models.board import ChatMessage
+
+logger = logging.getLogger(__name__)
 
 _client = openai.OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -10,6 +13,13 @@ _client = openai.OpenAI(
 
 
 def call_ai(board: dict, messages: list[ChatMessage]) -> dict:
+    if not config.OPENROUTER_API_KEY:
+        logger.error("OPENROUTER_API_KEY is not configured")
+        return {
+            "message": "AI is not configured. Please set OPENROUTER_API_KEY in your .env file.",
+            "board_update": None,
+        }
+
     system_prompt = (
         "You are an AI assistant helping manage a Kanban board. "
         "The current board state is provided as JSON below.\n\n"
@@ -31,4 +41,11 @@ def call_ai(board: dict, messages: list[ChatMessage]) -> dict:
     )
 
     content = response.choices[0].message.content
-    return json.loads(content)
+    try:
+        return json.loads(content)
+    except (json.JSONDecodeError, TypeError) as exc:
+        logger.error("AI response was not valid JSON: %s | raw=%r", exc, content)
+        return {
+            "message": "I encountered an error processing my response. Please try again.",
+            "board_update": None,
+        }
