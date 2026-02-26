@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Plus, X } from "lucide-react";
 
 const initialFormState = { title: "", details: "" };
 
@@ -45,8 +46,9 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
           <div className="flex items-center gap-2">
             <button
               type="submit"
-              className="rounded-full bg-[var(--secondary-purple)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:brightness-110"
+              className="flex items-center gap-1.5 rounded-full bg-[var(--secondary-purple)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:brightness-110"
             >
+              <Plus size={13} />
               Add card
             </button>
             <button
@@ -55,8 +57,9 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
                 setIsOpen(false);
                 setFormState(initialFormState);
               }}
-              className="rounded-full border border-[var(--stroke)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-text)] transition hover:text-[var(--navy-dark)]"
+              className="flex items-center gap-1.5 rounded-full border border-[var(--stroke)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-text)] transition hover:text-[var(--navy-dark)]"
             >
+              <X size={13} />
               Cancel
             </button>
           </div>
@@ -65,8 +68,9 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="w-full rounded-full border border-dashed border-[var(--stroke)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--primary-blue)] transition hover:border-[var(--primary-blue)]"
+          className="flex w-full items-center justify-center gap-1.5 rounded-full border border-dashed border-[var(--stroke)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--primary-blue)] transition hover:border-[var(--primary-blue)]"
         >
+          <Plus size={13} />
           Add a card
         </button>
       )}

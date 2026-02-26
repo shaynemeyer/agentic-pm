@@ -21,16 +21,16 @@ Ask the AI to reorganize cards, rename columns, or summarize what's in progress 
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 16 (static export), React, Tailwind CSS 4, shadcn/ui |
-| Drag-and-drop | @dnd-kit/core |
-| Client state | Zustand |
-| Server state | TanStack Query |
-| Backend | Python FastAPI |
-| Database | SQLite via SQLAlchemy async |
-| AI | OpenRouter (`openai/gpt-oss-120b`) |
-| Container | Docker (single image, port 8000) |
+| Layer         | Technology                                                   |
+| ------------- | ------------------------------------------------------------ |
+| Frontend      | Next.js 16 (static export), React, Tailwind CSS 4, shadcn/ui |
+| Drag-and-drop | @dnd-kit/core                                                |
+| Client state  | Zustand                                                      |
+| Server state  | TanStack Query                                               |
+| Backend       | Python FastAPI                                               |
+| Database      | SQLite via SQLAlchemy async                                  |
+| AI            | OpenRouter (`openai/gpt-oss-120b`)                           |
+| Container     | Docker (single image, port 8000)                             |
 
 ---
 

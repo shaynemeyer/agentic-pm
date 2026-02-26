@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MessageCircle, SendHorizonal } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useChatStore } from "@/lib/chat";
 import { sendChat, updateBoard } from "@/lib/api";
@@ -74,19 +75,7 @@ export function ChatSidebar() {
           className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--secondary-purple)] text-white shadow-[var(--shadow)] transition-transform hover:scale-105"
           aria-label="Open AI chat"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
+          <MessageCircle size={22} />
         </button>
       </SheetTrigger>
 
@@ -155,9 +144,10 @@ export function ChatSidebar() {
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
               className="bg-[var(--secondary-purple)] text-white hover:bg-[var(--secondary-purple)]/90"
+              aria-label="Send message"
               data-testid="chat-send"
             >
-              Send
+              <SendHorizonal size={16} />
             </Button>
           </div>
         </div>

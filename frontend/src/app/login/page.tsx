@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LogIn } from "lucide-react";
 import { useAuthStore } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -98,8 +99,9 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-xl bg-[var(--secondary-purple)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-[var(--secondary-purple)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
+            <LogIn size={16} />
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
