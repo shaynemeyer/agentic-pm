@@ -20,17 +20,17 @@ beforeEach(() => {
 });
 
 describe("fetchBoard", () => {
-  it("calls /api/board with Authorization header", async () => {
+  it("calls /api/boards/{boardId} with Authorization header", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: () => Promise.resolve(initialData),
     });
 
-    await fetchBoard();
+    await fetchBoard("board-1");
 
     expect(fetch).toHaveBeenCalledWith(
-      "/api/board",
+      "/api/boards/board-1",
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer test-token",
@@ -45,7 +45,7 @@ describe("fetchBoard", () => {
       status: 401,
     });
 
-    await expect(fetchBoard()).rejects.toThrow("Unauthorized");
+    await expect(fetchBoard("board-1")).rejects.toThrow("Unauthorized");
     expect(mockClearToken).toHaveBeenCalled();
   });
 
@@ -55,23 +55,23 @@ describe("fetchBoard", () => {
       status: 500,
     });
 
-    await expect(fetchBoard()).rejects.toThrow("Request failed: 500");
+    await expect(fetchBoard("board-1")).rejects.toThrow("Request failed: 500");
     expect(mockClearToken).not.toHaveBeenCalled();
   });
 });
 
 describe("updateBoard", () => {
-  it("calls PATCH /api/board with Authorization header and body", async () => {
+  it("calls PATCH /api/boards/{boardId} with Authorization header and body", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: () => Promise.resolve(initialData),
     });
 
-    await updateBoard(initialData);
+    await updateBoard("board-1", initialData);
 
     expect(fetch).toHaveBeenCalledWith(
-      "/api/board",
+      "/api/boards/board-1",
       expect.objectContaining({
         method: "PATCH",
         headers: expect.objectContaining({
@@ -89,7 +89,7 @@ describe("updateBoard", () => {
       status: 401,
     });
 
-    await expect(updateBoard(initialData)).rejects.toThrow("Unauthorized");
+    await expect(updateBoard("board-1", initialData)).rejects.toThrow("Unauthorized");
     expect(mockClearToken).toHaveBeenCalled();
   });
 });

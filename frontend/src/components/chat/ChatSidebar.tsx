@@ -8,6 +8,7 @@ import { sendChat, updateBoard } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { fetchBoard } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth";
+import { useBoardStore } from "@/lib/boardStore";
 import {
   Sheet,
   SheetContent,
@@ -27,18 +28,19 @@ export function ChatSidebar() {
   const [error, setError] = useState<string | null>(null);
 
   const token = useAuthStore((s) => s.token);
+  const activeBoardId = useBoardStore((s) => s.activeBoardId);
   const { messages, addMessage } = useChatStore();
   const queryClient = useQueryClient();
 
   const { data: board } = useQuery({
-    queryKey: ["board"],
-    queryFn: fetchBoard,
-    enabled: !!token,
+    queryKey: ["board", activeBoardId],
+    queryFn: () => fetchBoard(activeBoardId!),
+    enabled: !!token && !!activeBoardId,
   });
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || isLoading || !board) return;
+    if (!text || isLoading || !board || !activeBoardId) return;
 
     const userMsg = { role: "user" as const, content: text };
     setInput("");
@@ -46,13 +48,13 @@ export function ChatSidebar() {
     setIsLoading(true);
 
     try {
-      const response = await sendChat([...messages, userMsg], board);
+      const response = await sendChat([...messages, userMsg], board, activeBoardId);
       addMessage(userMsg);
       addMessage({ role: "assistant", content: response.message });
 
       if (response.board_update) {
-        await updateBoard(response.board_update);
-        queryClient.invalidateQueries({ queryKey: ["board"] });
+        await updateBoard(activeBoardId, response.board_update);
+        queryClient.invalidateQueries({ queryKey: ["board", activeBoardId] });
       }
     } catch {
       setError("Failed to get a response. Please try again.");

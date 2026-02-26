@@ -9,6 +9,7 @@ import { NewCardForm } from "@/components/NewCardForm";
 type KanbanColumnProps = {
   column: Column;
   cards: Card[];
+  boardId: string;
   onRename: (columnId: string, title: string) => void;
   onAddCard: (columnId: string, title: string, details: string) => void;
   onDeleteCard: (columnId: string, cardId: string) => void;
@@ -17,6 +18,7 @@ type KanbanColumnProps = {
 export const KanbanColumn = ({
   column,
   cards,
+  boardId,
   onRename,
   onAddCard,
   onDeleteCard,
@@ -56,6 +58,7 @@ export const KanbanColumn = ({
             <KanbanCard
               key={card.id}
               card={card}
+              boardId={boardId}
               onDelete={(cardId) => onDeleteCard(column.id, cardId)}
             />
           ))}

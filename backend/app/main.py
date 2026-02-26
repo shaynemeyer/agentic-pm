@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.database import init_db
 from app.routes.auth import router as auth_router
-from app.routes.board import router as board_router
+from app.routes.boards import router as boards_router
 from app.routes.chat import router as chat_router
 
 logging.basicConfig(
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth_router, prefix="/api")
-app.include_router(board_router, prefix="/api")
+app.include_router(boards_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 
 

@@ -7,6 +7,8 @@ import { useChatStore } from "@/lib/chat";
 import { initialData } from "@/lib/kanban";
 import * as api from "@/lib/api";
 
+const BOARD_ID = "board-1";
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
 }));
@@ -22,11 +24,23 @@ vi.mock("@/lib/auth", () => ({
     selector({ token: "test-token" }),
 }));
 
+vi.mock("@/lib/boardStore", () => ({
+  useBoardStore: (selector: (s: { activeBoardId: string }) => unknown) =>
+    selector({ activeBoardId: BOARD_ID }),
+}));
+
 // Radix UI uses ResizeObserver; provide a minimal stub for jsdom.
 global.ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
+};
+
+const mockBoard = {
+  ...initialData,
+  cards: Object.fromEntries(
+    Object.entries(initialData.cards).map(([k, v]) => [k, { ...v, created_by: null, assigned_to: null }])
+  ),
 };
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -39,8 +53,8 @@ function wrapper({ children }: { children: React.ReactNode }) {
 beforeEach(() => {
   vi.clearAllMocks();
   useChatStore.setState({ messages: [] });
-  vi.mocked(api.fetchBoard).mockResolvedValue(structuredClone(initialData));
-  vi.mocked(api.updateBoard).mockImplementation((board) => Promise.resolve(board));
+  vi.mocked(api.fetchBoard).mockResolvedValue(structuredClone(mockBoard));
+  vi.mocked(api.updateBoard).mockImplementation((_boardId, board) => Promise.resolve(board));
   vi.mocked(api.sendChat).mockResolvedValue({ message: "I can help!", board_update: null });
 });
 
@@ -65,9 +79,10 @@ describe("ChatSidebar", () => {
     await userEvent.click(screen.getByTestId("chat-send"));
 
     await waitFor(() => expect(api.sendChat).toHaveBeenCalledOnce());
-    const [messages, board] = vi.mocked(api.sendChat).mock.calls[0];
+    const [messages, board, boardId] = vi.mocked(api.sendChat).mock.calls[0];
     expect(messages).toEqual([{ role: "user", content: "Hello AI" }]);
-    expect(board).toEqual(initialData);
+    expect(board).toEqual(mockBoard);
+    expect(boardId).toBe(BOARD_ID);
   });
 
   it("AI response message appears in message list", async () => {
@@ -87,7 +102,7 @@ describe("ChatSidebar", () => {
   });
 
   it("calls updateBoard when board_update is returned", async () => {
-    const updatedBoard = structuredClone(initialData);
+    const updatedBoard = structuredClone(mockBoard);
     updatedBoard.columns[0].title = "Updated Backlog";
 
     vi.mocked(api.sendChat).mockResolvedValue({
@@ -102,7 +117,7 @@ describe("ChatSidebar", () => {
     await userEvent.type(input, "Update the board");
     await userEvent.click(screen.getByTestId("chat-send"));
 
-    await waitFor(() => expect(api.updateBoard).toHaveBeenCalledWith(updatedBoard));
+    await waitFor(() => expect(api.updateBoard).toHaveBeenCalledWith(BOARD_ID, updatedBoard));
   });
 
   it("does not add user message to store when sendChat fails", async () => {
@@ -117,9 +132,7 @@ describe("ChatSidebar", () => {
 
     await waitFor(() => expect(screen.getByTestId("chat-error")).toBeInTheDocument());
 
-    // The user message must not be committed to the store on failure
     expect(screen.queryByText("This should not appear")).not.toBeInTheDocument();
-    // Empty-list placeholder should still be visible
     expect(screen.getByTestId("empty-message-list")).toBeInTheDocument();
   });
 

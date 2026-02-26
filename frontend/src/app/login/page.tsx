@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const token = useAuthStore((s) => s.token);
-  const setToken = useAuthStore((s) => s.setToken);
+  const setSession = useAuthStore((s) => s.setSession);
   const router = useRouter();
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function LoginPage() {
         return;
       }
       const data = await resp.json();
-      setToken(data.token);
+      setSession(data.token, data.user_id, data.username);
       router.replace("/");
     } catch {
       setError("Network error. Is the server running?");

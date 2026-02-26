@@ -1,12 +1,15 @@
+BOARD_ID = "board-1"
+
+
 def _board_payload(client, auth_headers):
-    return client.get("/api/board", headers=auth_headers).json()
+    return client.get(f"/api/boards/{BOARD_ID}", headers=auth_headers).json()
 
 
 def test_chat_without_auth(client, auth_headers):
     board = _board_payload(client, auth_headers)
     resp = client.post(
         "/api/chat",
-        json={"messages": [{"role": "user", "content": "hi"}], "board": board},
+        json={"messages": [{"role": "user", "content": "hi"}], "board": board, "board_id": BOARD_ID},
     )
     assert resp.status_code == 401
 
@@ -19,7 +22,7 @@ def test_chat_no_board_update(client, auth_headers, monkeypatch):
     board = _board_payload(client, auth_headers)
     resp = client.post(
         "/api/chat",
-        json={"messages": [{"role": "user", "content": "hi"}], "board": board},
+        json={"messages": [{"role": "user", "content": "hi"}], "board": board, "board_id": BOARD_ID},
         headers=auth_headers,
     )
     assert resp.status_code == 200
@@ -51,7 +54,7 @@ def test_chat_with_board_update(client, auth_headers, monkeypatch):
 
     resp = client.post(
         "/api/chat",
-        json={"messages": [{"role": "user", "content": "move card-1"}], "board": board},
+        json={"messages": [{"role": "user", "content": "move card-1"}], "board": board, "board_id": BOARD_ID},
         headers=auth_headers,
     )
     assert resp.status_code == 200
@@ -70,7 +73,7 @@ def test_chat_with_board_update(client, auth_headers, monkeypatch):
 def test_chat_malformed_messages(client, auth_headers):
     resp = client.post(
         "/api/chat",
-        json={"messages": "not-a-list", "board": {}},
+        json={"messages": "not-a-list", "board": {}, "board_id": BOARD_ID},
         headers=auth_headers,
     )
     assert resp.status_code == 422

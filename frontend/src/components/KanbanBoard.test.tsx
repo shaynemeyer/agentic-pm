@@ -6,19 +6,36 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { initialData } from "@/lib/kanban";
 import * as api from "@/lib/api";
 
+const BOARD_ID = "board-1";
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
 }));
 
 vi.mock("@/lib/api", () => ({
+  fetchBoards: vi.fn(),
   fetchBoard: vi.fn(),
   updateBoard: vi.fn(),
+  deleteBoard: vi.fn(),
+  fetchMembers: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
-  useAuthStore: (selector: (s: { token: string | null; clearToken: () => void }) => unknown) =>
-    selector({ token: "test-token", clearToken: vi.fn() }),
+  useAuthStore: (selector: (s: { token: string | null; username: string | null; clearToken: () => void }) => unknown) =>
+    selector({ token: "test-token", username: "user", clearToken: vi.fn() }),
 }));
+
+vi.mock("@/lib/boardStore", () => ({
+  useBoardStore: (selector: (s: { activeBoardId: string; setActiveBoardId: () => void }) => unknown) =>
+    selector({ activeBoardId: BOARD_ID, setActiveBoardId: vi.fn() }),
+}));
+
+// Radix UI uses ResizeObserver; provide a minimal stub for jsdom.
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -27,10 +44,21 @@ function wrapper({ children }: { children: React.ReactNode }) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 
+const mockBoard = {
+  ...initialData,
+  cards: Object.fromEntries(
+    Object.entries(initialData.cards).map(([k, v]) => [k, { ...v, created_by: null, assigned_to: null }])
+  ),
+};
+
+const mockBoardSummary = { id: BOARD_ID, title: "Main Board", owner_username: "user" };
+
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(api.fetchBoard).mockResolvedValue(structuredClone(initialData));
-  vi.mocked(api.updateBoard).mockImplementation((board) => Promise.resolve(board));
+  vi.mocked(api.fetchBoards).mockResolvedValue([mockBoardSummary]);
+  vi.mocked(api.fetchBoard).mockResolvedValue(structuredClone(mockBoard));
+  vi.mocked(api.updateBoard).mockImplementation((_boardId, board) => Promise.resolve(board));
+  vi.mocked(api.fetchMembers).mockResolvedValue([]);
 });
 
 const getFirstColumn = async () => {
@@ -53,6 +81,7 @@ describe("KanbanBoard", () => {
     await userEvent.tab();
     await waitFor(() =>
       expect(api.updateBoard).toHaveBeenCalledWith(
+        BOARD_ID,
         expect.objectContaining({
           columns: expect.arrayContaining([
             expect.objectContaining({ title: "New Name" }),
@@ -76,8 +105,9 @@ describe("KanbanBoard", () => {
     await userEvent.click(within(column).getByRole("button", { name: /add card/i }));
 
     await waitFor(() => expect(api.updateBoard).toHaveBeenCalled());
-    const call = vi.mocked(api.updateBoard).mock.calls[0][0];
-    const newCard = Object.values(call.cards).find((c) => (c as { title: string }).title === "New card");
+    const call = vi.mocked(api.updateBoard).mock.calls[0];
+    const board = call[1];
+    const newCard = Object.values(board.cards).find((c) => (c as { title: string }).title === "New card");
     expect(newCard).toBeDefined();
   });
 
@@ -92,6 +122,7 @@ describe("KanbanBoard", () => {
 
     await waitFor(() =>
       expect(api.updateBoard).toHaveBeenCalledWith(
+        BOARD_ID,
         expect.objectContaining({
           cards: expect.not.objectContaining({ "card-1": expect.anything() }),
         })
@@ -102,22 +133,16 @@ describe("KanbanBoard", () => {
   it("rolls back optimistic update when updateBoard fails and board keeps rendering", async () => {
     vi.mocked(api.updateBoard).mockRejectedValueOnce(new Error("Network error"));
 
-    // Re-seed fetchBoard so the rollback query-cache value is verifiable
-    vi.mocked(api.fetchBoard).mockResolvedValue(structuredClone(initialData));
-
     render(<KanbanBoard />, { wrapper });
 
-    // Trigger a delete (simpler than rename — no KanbanColumn local state to deal with)
     const column = await getFirstColumn();
     const deleteButton = await within(column).findByRole("button", {
       name: /delete align roadmap themes/i,
     });
     await userEvent.click(deleteButton);
 
-    // updateBoard was called (the optimistic update ran)
     await waitFor(() => expect(api.updateBoard).toHaveBeenCalledOnce());
 
-    // Board still renders all five columns — no crash, rollback did not break the component
     expect(await screen.findAllByTestId(/column-/i)).toHaveLength(5);
   });
 });
